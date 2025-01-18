@@ -1,0 +1,51 @@
+name: Release Binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  release_snapshot:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.4"
+
+      - name: Build binaries
+        run: |
+          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o snapshot-linux-amd64 ./snapshot
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o snapshot-windows-amd64.exe ./snapshot
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o snapshot-darwin-amd64 ./snapshot
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -trimpath -o snapshot-darwin-arm64 ./snapshot
+
+      - name: Generate checksums
+        run: |
+          sha256sum snapshot-* > checksums.txt
+
+      - name: Compress binaries
+        run: |
+          gzip snapshot-linux-amd64
+          gzip snapshot-windows-amd64.exe
+          gzip snapshot-darwin-amd64
+          gzip snapshot-darwin-arm64
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            snapshot-linux-amd64.gz
+            snapshot-windows-amd64.exe.gz
+            snapshot-darwin-amd64.gz
+            snapshot-darwin-arm64.gz
+            checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,51 @@
+name: Release Instance Binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  release_instance:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.4"
+
+      - name: Build binaries
+        run: |
+          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o instance-linux-amd64 ./instance
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o instance-windows-amd64.exe ./instance
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o instance-darwin-amd64 ./instance
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -trimpath -o instance-darwin-arm64 ./instance
+
+      - name: Generate checksums
+        run: |
+          sha256sum instance-* > checksums.txt
+
+      - name: Compress binaries
+        run: |
+          gzip instance-linux-amd64
+          gzip instance-windows-amd64.exe
+          gzip instance-darwin-amd64
+          gzip instance-darwin-arm64
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            instance-linux-amd64.gz
+            instance-windows-amd64.exe.gz
+            instance-darwin-amd64.gz
+            instance-darwin-arm64.gz
+            checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
