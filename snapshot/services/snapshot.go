@@ -86,7 +86,8 @@ func (s *SnapshotService) DeleteSnapshot(traceID string, instanceID int64, snaps
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		return requestID, fmt.Errorf("erro inesperado: status code %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return requestID, fmt.Errorf("erro inesperado: status code %d, body: %s", resp.StatusCode, string(body))
 	}
 
 	return requestID, nil
@@ -107,7 +108,7 @@ func (s *SnapshotService) DeleteOldSnapshots(traceID string, instanceID int64, s
 	}
 	requestID, err = s.DeleteSnapshot(traceID, instanceID, oldSnapshot.SnapshotID)
 	if err != nil {
-		fmt.Printf("Error deleting snapshot: \n\tRequest ID: %s\n", requestID)
+		fmt.Printf("Error deleting snapshot: \n\tRequest ID: %s\n\tSnapshot ID: %s\n\tTrace ID: %s\n\tError: %v\n", requestID, oldSnapshot.SnapshotID, traceID, err)
 		return requestID, fmt.Errorf("erro ao deletar snapshot: %v", err)
 	}
 	return s.DeleteOldSnapshots(traceID, instanceID, snapshotsToKeep)
