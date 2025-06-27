@@ -20,3 +20,4 @@
 # env file
 .env
 snapshot/main
+snapshot/snapshot
