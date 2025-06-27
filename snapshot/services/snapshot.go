@@ -73,7 +73,6 @@ func (s *SnapshotService) DeleteSnapshot(traceID string, instanceID int64, snaps
 		return requestID, fmt.Errorf("erro ao criar requisição: %v", err)
 	}
 
-	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", s.AccessToken))
 	req.Header.Add("x-request-id", requestID)
 	req.Header.Add("x-trace-id", traceID)
