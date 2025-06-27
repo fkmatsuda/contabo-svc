@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Build snapshot binary otimizado para produção",
+			"command": "go build -ldflags=\"-s -w\" -o snapshot ./snapshot/main.go",
+			"group": "build",
+			"problemMatcher": [
+				"$go"
+			]
+		}
+	]
+}
